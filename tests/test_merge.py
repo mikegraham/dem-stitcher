@@ -169,3 +169,35 @@ def test_merge_in_memory() -> None:
         ]
     )
     assert np.isnan(merged_profile_actual['nodata'])
+
+
+def test_merge_tiles_no_intersection(test_data_dir: Path) -> None:
+    """Requesting an extent that doesn't overlap any tile should raise."""
+    merge_dir = test_data_dir / 'stitcher' / 'merge_tiles'
+    tile_datasets = [rasterio.open(merge_dir / 'ul.tif')]
+    # Extent far away from the tile (which covers [10, -10, 20, 0])
+    disjoint_extent = [100, 50, 110, 60]
+    with pytest.raises(ValueError, match='No datasets intersect'):
+        merge_tile_datasets_within_extent(tile_datasets, disjoint_extent)
+    for ds in tile_datasets:
+        ds.close()
+
+
+def test_merge_tiles_respects_dtype_and_nodata(test_data_dir: Path) -> None:
+    """Verify that explicit dtype and nodata are propagated through the
+    direct rasterio.merge path into the returned profile and array."""
+    merge_dir = test_data_dir / 'stitcher' / 'merge_tiles'
+    tile_datasets = [
+        rasterio.open(merge_dir / 'ul.tif'),
+        rasterio.open(merge_dir / 'ur.tif'),
+    ]
+    extent = [10, -10, 30, 0]
+    X, p = merge_tile_datasets_within_extent(
+        tile_datasets, extent, dtype=np.float32, nodata=-9999.0
+    )
+    for ds in tile_datasets:
+        ds.close()
+
+    assert X.dtype == np.float32
+    assert p['dtype'] == np.float32
+    assert p['nodata'] == -9999.0
