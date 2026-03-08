@@ -123,7 +123,7 @@ def reproject_arr_to_match_profile(
     reproject_profile.update({'dtype': src_dtype, 'nodata': nodata, 'count': count})
 
     height, width = ref_profile['height'], ref_profile['width']
-    dst_array = np.zeros((count, height, width), dtype=src_dtype)
+    dst_array = np.zeros((count, height, width))
 
     reproject(
         src_array,
@@ -136,7 +136,7 @@ def reproject_arr_to_match_profile(
         resampling=Resampling[resampling],
         num_threads=num_threads,
     )
-    return dst_array, reproject_profile
+    return dst_array.astype(src_dtype), reproject_profile
 
 
 def get_bounds_dict(profile: dict) -> dict:
@@ -200,59 +200,6 @@ def reproject_profile_to_new_crs(src_profile: dict, dst_crs: CRS, target_resolut
         }
     )
     return reprojected_profile
-
-
-def reproject_arr_to_new_crs(
-    src_array: np.ndarray,
-    src_profile: dict,
-    dst_crs: str,
-    resampling: str = 'bilinear',
-    target_resolution: float = None,
-) -> tuple[np.ndarray, dict]:
-    """
-    Reproject an array into a new CRS.
-
-    Parameters
-    ----------
-    src_array : np.ndarray
-        Source array
-    src_profile : dict
-        Source rasterio profile corresponding to `src_array`
-    dst_crs : str
-        The destination rasterio CRS to reproject into
-    resampling : str
-        See all the options:
-        https://github.com/rasterio/rasterio/blob/master/rasterio/enums.py#L48-L82
-    target_resolution : float
-        Target resolution
-
-    Returns
-    -------
-    Tuple[np.ndarray, dict]:
-        (reprojected_array, reprojected_profile) of data.
-    """
-    tr = target_resolution
-    reprojected_profile = reproject_profile_to_new_crs(src_profile, dst_crs, target_resolution=tr)
-    resampling = Resampling[resampling]
-    dst_array = np.zeros(
-        (reprojected_profile['count'], reprojected_profile['height'], reprojected_profile['width']),
-        dtype=src_profile['dtype'],
-    )
-
-    reproject(
-        # Source parameters
-        source=src_array,
-        src_crs=src_profile['crs'],
-        src_transform=src_profile['transform'],
-        # Destination paramaters
-        destination=dst_array,
-        dst_transform=reprojected_profile['transform'],
-        dst_crs=reprojected_profile['crs'],
-        dst_nodata=src_profile['nodata'],
-        # Configuration
-        resampling=resampling,
-    )
-    return dst_array, reprojected_profile
 
 
 def _aligned_target(
