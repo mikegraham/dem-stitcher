@@ -123,7 +123,7 @@ def reproject_arr_to_match_profile(
     reproject_profile.update({'dtype': src_dtype, 'nodata': nodata, 'count': count})
 
     height, width = ref_profile['height'], ref_profile['width']
-    dst_array = np.zeros((count, height, width))
+    dst_array = np.zeros((count, height, width), dtype=src_dtype)
 
     reproject(
         src_array,
@@ -136,7 +136,7 @@ def reproject_arr_to_match_profile(
         resampling=Resampling[resampling],
         num_threads=num_threads,
     )
-    return dst_array.astype(src_dtype), reproject_profile
+    return dst_array, reproject_profile
 
 
 def get_bounds_dict(profile: dict) -> dict:

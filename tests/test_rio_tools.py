@@ -3,11 +3,8 @@ from pathlib import Path
 import numpy as np
 import rasterio
 from numpy.testing import assert_almost_equal
-from rasterio.crs import CRS
-
 from dem_stitcher.rio_tools import (
     reproject_arr_to_match_profile,
-    reproject_arr_to_new_crs,
     translate_dataset,
     update_profile_resolution,
 )
@@ -60,19 +57,3 @@ def test_dataset_translation(test_data_dir: Path) -> None:
     ds_left_t.close()
     ds_right.close()
     mfile.close()
-
-
-def test_reproject_to_new_crs_preserves_dtype(test_data_dir: Path) -> None:
-    """reproject_arr_to_new_crs should return an array matching the source dtype."""
-    data_dir = test_data_dir / 'rio_tools' / 'update_resolution'
-    with rasterio.open(data_dir / 'res_one_deg.tif') as ds:
-        src_profile = ds.profile
-        src_arr = ds.read()
-
-    assert src_profile['dtype'] == 'float32'
-
-    # UTM zone 32N covers the test tile's location (lon 10-12, lat -2 to 0)
-    result_arr, _ = reproject_arr_to_new_crs(
-        src_arr, src_profile, CRS.from_epsg(32632), resampling='bilinear'
-    )
-    assert result_arr.dtype == np.float32

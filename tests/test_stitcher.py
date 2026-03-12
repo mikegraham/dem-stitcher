@@ -191,7 +191,6 @@ def test_4269_reprojection_branch_matches_rio_warp(tmp_path: Path) -> None:
             dst_area_or_point='Area',
             dst_resolution=None,
             num_threads_reproj=1,
-            n_threads_for_reading_tile_data=1,
         )
 
     with rasterio.open(expected_path) as expected_ds:
